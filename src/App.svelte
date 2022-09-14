@@ -19,8 +19,7 @@
     LineElement,
     Title,
     Tooltip,
-    Legend,
-Chart,
+    Legend
   } from "chart.js";
 
   ChartJS.register(
@@ -33,8 +32,7 @@ Chart,
     Legend
   );
   import { Line } from "svelte-chartjs";
-  import { faker } from "@faker-js/faker";
-  import "./App.scss";
+  import "./App.sass";
 
   let chart;
 
@@ -154,10 +152,4 @@ Chart,
     <Line bind:chart {data} {options} />
   </Row>
   </Container>
-
-  <style>
-    .no-margin {
-      margin-bottom: 0 !important;
-    }
-  </style>
 </main>
