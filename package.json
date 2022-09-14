@@ -1,0 +1,24 @@
+{
+  "name": "myapp",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^7.5.0",
+    "@sveltejs/vite-plugin-svelte": "^1.0.2",
+    "sass": "^1.54.9",
+    "vite": "^3.1.0"
+  },
+  "dependencies": {
+    "bootstrap": "^5.2.1",
+    "chart.js": "^3.9.1",
+    "svelte": "^3.50.1",
+    "svelte-chartjs": "^2.1.1",
+    "sveltestrap": "^5.9.0"
+  }
+}
