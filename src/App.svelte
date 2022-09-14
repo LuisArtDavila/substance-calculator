@@ -19,7 +19,7 @@
     LineElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
   } from "chart.js";
 
   ChartJS.register(
@@ -37,12 +37,25 @@
   let chart;
 
   // Generate the labels for the chart. Maybe could be rewritten to be cleaner.
-  const toChartDateString = (date) => {
+  const toChartDateString = (date: Date) => {
     return date.toLocaleDateString("en-us", {
       weekday: "long",
       month: "short",
       day: "2-digit",
     });
+  };
+
+  const estimateDose = (
+    previousDose: number,
+    daysSinceLastDose: number,
+    desiredDose: number
+  ): number => {
+    return (
+      (previousDose / 100) *
+        280.059565 *
+        Math.pow(daysSinceLastDose, -0.412565956) +
+      (desiredDose - previousDose)
+    );
   };
 
   const DAY_IN_MILLISECONDS = 86400000;
@@ -84,15 +97,14 @@
   const insertWeek = (event) => {
     event.preventDefault();
 
-    const generateRandomColor = () => `hsla(${Math.random() * 360}, 70%, 80%, 1)`
+    const generateRandomColor = () =>
+      `hsla(${Math.random() * 360}, 70%, 80%, 1)`;
     const randomlyGeneratedColor = generateRandomColor();
 
     const doseData = [];
     let previousDoseEstimate = 0;
     for (const _ of Array(consecutiveDays).keys()) {
-      let estimatedDose =
-        (previousDoseEstimate / 100) * 280.059565 * Math.pow(1, -0.412565956) +
-        (desiredDose - previousDoseEstimate);
+      let estimatedDose = estimateDose(previousDoseEstimate, 1, desiredDose);
       doseData.push(estimatedDose);
       previousDoseEstimate = estimatedDose;
     }
@@ -102,15 +114,21 @@
       label: `Week ${weekIndex}`,
       data: doseData,
       borderColor: randomlyGeneratedColor,
-      backgroundColor: randomlyGeneratedColor.replace('1)', '0.5)'),
-      borderCapStyle: "butt"
+      backgroundColor: randomlyGeneratedColor.replace("1)", "0.5)"),
+      borderCapStyle: "butt",
     };
 
     data.datasets.push(weekData);
     chart.update();
+  };
 
-    console.log(data.datasets)
-  }
+  const clearChart = (event) => {
+    event.preventDefault();
+
+    chart.data.labels = [];
+    chart.data.datasets = [];
+    chart.update();
+  };
 </script>
 
 <main>
@@ -130,9 +148,9 @@
       <Row>
         <Col xs="3">
           <FormGroup>
-            <Label for="consecutiveDays"
-              >For how many consecutive days? {consecutiveDays}</Label
-            >
+            <Label for="consecutiveDays">
+              For how many consecutive days? {consecutiveDays}
+            </Label>
             <Input
               type="range"
               name="range"
@@ -147,9 +165,10 @@
         </Col>
       </Row>
       <Button color="primary" on:click={insertWeek}>Add week</Button>
+      <Button color="danger" on:click={clearChart}>Reset chart</Button>
     </Form>
     <Row>
-    <Line bind:chart {data} {options} />
-  </Row>
+      <Line bind:chart {data} {options} />
+    </Row>
   </Container>
 </main>
