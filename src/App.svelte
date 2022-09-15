@@ -32,52 +32,22 @@
     Legend
   );
   import { Line } from "svelte-chartjs";
+  import { DateInput } from "date-picker-svelte";
+
   import "./App.sass";
+  import { WeekRecords, type WeekRecord } from "./WeekRecords";
 
   let chart;
 
-  // Generate the labels for the chart. Maybe could be rewritten to be cleaner.
-  const toChartDateString = (date: Date) => {
-    return date.toLocaleDateString("en-us", {
-      weekday: "long",
-      month: "short",
-      day: "2-digit",
-    });
-  };
+  const weekRecords = new WeekRecords();
 
-  const estimateDose = (
-    previousDose: number,
-    daysSinceLastDose: number,
-    desiredDose: number
-  ): number => {
-    return (
-      (previousDose / 100) *
-        280.059565 *
-        Math.pow(daysSinceLastDose, -0.412565956) +
-      (desiredDose - previousDose)
-    );
-  };
-
-  const DAY_IN_MILLISECONDS = 86400000;
-  const startDay = new Date();
-  const endDay = new Date(startDay.getTime() + DAY_IN_MILLISECONDS * 6);
-  let currentDay = new Date(startDay);
-
-  const labels = [toChartDateString(startDay)];
-
-  while (currentDay < endDay) {
-    let nextDay = currentDay.setDate(currentDay.getDate() + 1);
-    currentDay = new Date(nextDay);
-
-    let currentLabel = toChartDateString(currentDay);
-    labels.push(currentLabel);
-  }
-
-  let consecutiveDays = 2;
+  let consecutiveDays = 6;
   let desiredDose = 50;
 
+  let startDay = new Date();
+
   let data = {
-    labels: labels,
+    labels: [],
     datasets: [],
   };
 
@@ -99,31 +69,37 @@
 
     const generateRandomColor = () =>
       `hsla(${Math.random() * 360}, 70%, 80%, 1)`;
-    const randomlyGeneratedColor = generateRandomColor();
+    const randomChartLabelColor = generateRandomColor();
 
-    const doseData = [];
-    let previousDoseEstimate = 0;
-    for (const _ of Array(consecutiveDays).keys()) {
-      let estimatedDose = estimateDose(previousDoseEstimate, 1, desiredDose);
-      doseData.push(estimatedDose);
-      previousDoseEstimate = estimatedDose;
-    }
+    const endDay = new Date(startDay);
+    endDay.setDate(startDay.getDate() + consecutiveDays);
 
-    const weekIndex = data.datasets.length + 1;
+    const weekRecord: WeekRecord = weekRecords.addWeek({
+      week: ++weekRecords.currentWeekIndex,
+      startingDay: startDay,
+      endingDay: endDay,
+      desiredDose: desiredDose,
+    });
+
+    console.log(`Week dosing: ${weekRecord.dosing}`);
+
     const weekData = {
-      label: `Week ${weekIndex}`,
-      data: doseData,
-      borderColor: randomlyGeneratedColor,
-      backgroundColor: randomlyGeneratedColor.replace("1)", "0.5)"),
-      borderCapStyle: "butt",
+      label: `Week ${weekRecord.week}`,
+      data: weekRecord.dosing,
+      borderColor: randomChartLabelColor,
+      backgroundColor: randomChartLabelColor.replace("1)", "0.5)"),
     };
 
     data.datasets.push(weekData);
+    data.labels = weekRecords.generateChartLabels();
     chart.update();
   };
 
   const clearChart = (event) => {
     event.preventDefault();
+
+    weekRecords.currentWeekIndex = 0;
+    weekRecords.records = [];
 
     chart.data.labels = [];
     chart.data.datasets = [];
@@ -143,6 +119,12 @@
             </FormGroup>
             <InputGroupText>μg</InputGroupText>
           </InputGroup>
+        </Col>
+      </Row>
+      <Label>Starting date</Label>
+      <Row class="mb-3">
+        <Col xs="3">
+          <DateInput bind:value={startDay} format="yyyy-MM-dd" />
         </Col>
       </Row>
       <Row>
