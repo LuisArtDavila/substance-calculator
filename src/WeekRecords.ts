@@ -9,6 +9,17 @@ export type WeekRecord = {
     readonly startingDay: Date;
     readonly endingDay: Date;
     readonly desiredDose: number;
+
+    // User provided dose information to help calculate the rest of the week
+    readonly lastDose: number;
+    readonly daysSinceLastDose: number;
+
+    readonly doseFrequency: number;
+
+    // ChartJS-specific properties
+    readonly borderColor: string;
+    readonly backgroundColor: string;
+
     finalDose: number;
     dosing: Array<number>;
 }
@@ -23,19 +34,12 @@ export class WeekRecords {
         if (this.earliestStartDate == undefined) {
             this.earliestStartDate = partialWeek.startingDay;
             this.latestEndDate = partialWeek.endingDay;
+
+            // TODO: Immedietely return week here
         }
+
         // Generate dosing first
         partialWeek.dosing = this.estimateDosing(partialWeek);
-
-        // TODO: Fill for days that extend beyond the week's range.
-        if (partialWeek.startingDay < this.earliestStartDate) {
-            this.earliestStartDate = partialWeek.startingDay;
-            // TODO: Update end of other weeks.
-        }
-        if (partialWeek.endingDay > this.latestEndDate) {
-            this.latestEndDate = partialWeek.endingDay;
-            // TODO: Update the beginning of other weeks.
-        }
 
         if (this.earliestStartDate < partialWeek.startingDay) {
             // Calculate the difference
@@ -46,9 +50,25 @@ export class WeekRecords {
             console.log("startDateDifference: %d", startDateDifference);
 
             partialWeek.dosing = [
-                ...Array(startDateDifference).fill(0),
+                ...Array(startDateDifference),
                 ...partialWeek.dosing,
             ];
+        } else {
+            this.earliestStartDate = partialWeek.startingDay;
+            console.log('Updating other weeks starting doses..');
+
+            for (const week of this.records) {
+                const startDateDifference = differenceInDays(
+                    week.startingDay,
+                    partialWeek.startingDay
+                );
+                console.log(`Calculated a ${startDateDifference} day difference..`);
+                week.dosing = [
+                    ...Array(startDateDifference),
+                    ...week.dosing
+                ]
+                console.log(`New week's dosing (startingDay): ${week.dosing}`);
+            }
         }
 
         if (this.latestEndDate > partialWeek.endingDay) {
@@ -60,8 +80,23 @@ export class WeekRecords {
 
             partialWeek.dosing = [
                 ...partialWeek.dosing,
-                ...Array(endDateDifference).fill(0),
+                ...Array(endDateDifference),
             ];
+        } else {
+            this.latestEndDate = partialWeek.endingDay;
+            console.log("Updating other weeks end doses..");
+
+            for (const week of this.records) {
+                const endDateDifference = differenceInDays(
+                    partialWeek.endingDay,
+                    week.endingDay
+                );
+                console.log(`Calculcated a ${endDateDifference} day difference..`);
+                week.dosing = [
+                    ...week.dosing,
+                    ...Array(endDateDifference)
+                ]
+            }
         }
 
         const week: WeekRecord = {
@@ -69,8 +104,13 @@ export class WeekRecords {
             startingDay: partialWeek.startingDay,
             endingDay: partialWeek.endingDay,
             desiredDose: partialWeek.desiredDose,
+            lastDose: partialWeek.lastDose,
+            daysSinceLastDose: partialWeek.daysSinceLastDose,
+            doseFrequency: partialWeek.doseFrequency,
             finalDose: partialWeek.dosing[-1],
             dosing: partialWeek.dosing,
+            borderColor: partialWeek.borderColor,
+            backgroundColor: partialWeek.borderColor.replace("1)", "0.5)")
         };
 
         this.records.push(week);
@@ -103,18 +143,44 @@ export class WeekRecords {
     private estimateDosing(week: WeekRecord | Partial<WeekRecord>) {
         const dateRange = differenceInDays(week.endingDay, week.startingDay);
         const doseData = [];
-        let previousDoseEstimate = 0;
-        for (const _ of Array(dateRange).keys()) {
-            let estimatedDose = (
-                (previousDoseEstimate / 100) *
-                280.059565 *
-                Math.pow(1, -0.412565956) +
-                (week.desiredDose - previousDoseEstimate)
-            );
+
+        console.dir(week);
+        console.table(week);
+
+        // After the initial loop, this should change to the dose frequency specified by the user
+        let daysSinceLastDose = week.daysSinceLastDose || week.doseFrequency;
+        let previousDoseEstimate = week.lastDose;
+        let estimatedDose = 0;
+
+        for (const currentDay of Array(dateRange).keys()) {
+            if (currentDay % week.doseFrequency === 0) {
+                estimatedDose =
+                    (previousDoseEstimate / 100) *
+                    280.059565 * Math.pow(daysSinceLastDose, -0.412565956) +
+                    (week.desiredDose - previousDoseEstimate);                    
+                
+                previousDoseEstimate = estimatedDose;
+                daysSinceLastDose = week.doseFrequency;
+            } else {
+                estimatedDose = 0;
+            }
+
             doseData.push(estimatedDose);
-            previousDoseEstimate = estimatedDose;
         }
 
         return doseData;
+    }
+
+    public getRecords(): Array<object> {
+        const dosingRecords = this.records.map(record => ({
+            label: `Week ${record.week}`,
+            data: record.dosing,
+            borderColor: record.borderColor,
+            backgroundColor: record.backgroundColor
+        }));
+
+        console.log(dosingRecords);
+
+        return dosingRecords;
     }
 }

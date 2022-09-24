@@ -35,14 +35,21 @@
   import { DateInput } from "date-picker-svelte";
 
   import "./App.sass";
-  import { WeekRecords, type WeekRecord } from "./WeekRecords";
+  import { WeekRecords } from "./WeekRecords";
 
   let chart;
 
-  const weekRecords = new WeekRecords();
+  let weekRecords = new WeekRecords();
 
   let consecutiveDays = 6;
   let desiredDose = 50;
+
+  let lastDose = 0;
+  let daysSinceLastDose = 0;
+
+  // Partially a workaround for "selected" not working
+  // See: https://github.com/bestguy/sveltestrap/issues/391
+  let doseFrequency = "1";
 
   let startDay = new Date();
 
@@ -67,30 +74,23 @@
   const insertWeek = (event) => {
     event.preventDefault();
 
-    const generateRandomColor = () =>
-      `hsla(${Math.random() * 360}, 70%, 80%, 1)`;
-    const randomChartLabelColor = generateRandomColor();
-
     const endDay = new Date(startDay);
     endDay.setDate(startDay.getDate() + consecutiveDays);
 
-    const weekRecord: WeekRecord = weekRecords.addWeek({
+    const randomChartLabelColor = `hsla(${Math.random() * 360}, 70%, 80%, 1)`;
+    
+    weekRecords.addWeek({
       week: ++weekRecords.currentWeekIndex,
       startingDay: startDay,
       endingDay: endDay,
       desiredDose: desiredDose,
+      lastDose: lastDose,
+      daysSinceLastDose: daysSinceLastDose,
+      doseFrequency: parseInt(doseFrequency),
+      borderColor: randomChartLabelColor,
     });
 
-    console.log(`Week dosing: ${weekRecord.dosing}`);
-
-    const weekData = {
-      label: `Week ${weekRecord.week}`,
-      data: weekRecord.dosing,
-      borderColor: randomChartLabelColor,
-      backgroundColor: randomChartLabelColor.replace("1)", "0.5)"),
-    };
-
-    data.datasets.push(weekData);
+    data.datasets = weekRecords.getRecords();
     data.labels = weekRecords.generateChartLabels();
     chart.update();
   };
@@ -98,8 +98,7 @@
   const clearChart = (event) => {
     event.preventDefault();
 
-    weekRecords.currentWeekIndex = 0;
-    weekRecords.records = [];
+    weekRecords = new WeekRecords();
 
     chart.data.labels = [];
     chart.data.datasets = [];
@@ -121,6 +120,36 @@
           </InputGroup>
         </Col>
       </Row>
+      <Row>
+        <Col xs="3">
+          <InputGroup class="mb-3">
+            <FormGroup floating label="Last dose (optional)" class="no-margin">
+              <Input bind:value={lastDose} placeholder="Last dose" />
+            </FormGroup>
+            <InputGroupText>μg</InputGroupText>
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs="3">
+          <FormGroup>
+            <Label for="daysSinceLastDose">
+              Days since last dose {daysSinceLastDose}
+            </Label>
+            <Input
+              type="range"
+              name="range"
+              id="daysSinceLastDose"
+              bind:value={daysSinceLastDose}
+              min="0"
+              max="14"
+              step="1"
+              placeholder="Range placeholder"
+              disabled={lastDose < 1}
+            />
+          </FormGroup>
+        </Col>
+      </Row>
       <Label>Starting date</Label>
       <Row class="mb-3">
         <Col xs="3">
@@ -129,9 +158,9 @@
       </Row>
       <Row>
         <Col xs="3">
-          <FormGroup>
+          <FormGroup class="no-margin">
             <Label for="consecutiveDays">
-              For how many consecutive days? {consecutiveDays}
+              For how long will you be dosing? {consecutiveDays}
             </Label>
             <Input
               type="range"
@@ -143,6 +172,23 @@
               step="1"
               placeholder="Range placeholder"
             />
+          </FormGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs="3">
+          <FormGroup>
+            <Label for="doseFrequency">Dose frequency</Label>
+            <Input
+              type="select"
+              name="select"
+              id="doseFrequency"
+              bind:value={doseFrequency}
+            >
+              <option value="1">Every day</option>
+              <option value="2">Every other day</option>
+              <option value="3">Every three days</option>
+            </Input>
           </FormGroup>
         </Col>
       </Row>
