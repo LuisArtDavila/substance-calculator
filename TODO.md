@@ -1,6 +1,6 @@
-- [ ] Allow you to specify specify tolerance breaks in between dosing
-- [ ] Allow user to specify their last dose (and how many days it's been since then) to get a more accurate starting point
-- [ ] Allow user to specify the start date for the chart
+- [x] Allow you to specify specify tolerance breaks in between dosing
+- [x] Allow user to specify their last dose (and how many days it's been since then) to get a more accurate starting point
+- [x] Allow user to specify the start date for the chart
 - [ ] Make it so that you can save an image of the chart
 - [x] Make it so that you can clear the chart
 - [ ] `*uncertain*` Make it so that you can calculate dosing for delta-9 THC (requires formula research and addition of UI elements)
