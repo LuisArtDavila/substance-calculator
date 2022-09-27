@@ -48,7 +48,7 @@
   let lastDose = 0;
   let daysSinceLastDose = 0;
 
-  // Partially a workaround for "selected" not working
+  // Partially a workaround for "selected" not working.
   // See: https://github.com/bestguy/sveltestrap/issues/391
   let doseFrequency = "1";
 
