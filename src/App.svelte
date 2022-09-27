@@ -41,6 +41,7 @@
 
   let weekRecords = new WeekRecords();
 
+  // Bound variables
   let consecutiveDays = 6;
   let desiredDose = 50;
 
@@ -134,7 +135,7 @@
         <Col xs="3">
           <FormGroup>
             <Label for="daysSinceLastDose">
-              Days since last dose {daysSinceLastDose}
+              Days since last dose: {daysSinceLastDose}
             </Label>
             <Input
               type="range"
@@ -160,7 +161,7 @@
         <Col xs="3">
           <FormGroup class="no-margin">
             <Label for="consecutiveDays">
-              For how long will you be dosing? {consecutiveDays}
+              For how long will you be dosing? {consecutiveDays} days
             </Label>
             <Input
               type="range"
