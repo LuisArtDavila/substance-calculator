@@ -6,3 +6,4 @@
 - [ ] `*uncertain*` Make it so that you can calculate dosing for delta-9 THC (requires formula research and addition of UI elements)
 - [ ] `*probably*` Make it so that you can remove certain weeks from the chart
 - [ ] `*maybe*` Make it so that you can chain several weeks together
+- [ ] Switch over to using sveltestrap's built-in date picker
