@@ -10,6 +10,8 @@
     InputGroupText,
     Label,
     Row,
+    ListGroup,
+    ListGroupItem,
   } from "sveltestrap";
   import {
     Chart as ChartJS,
@@ -37,6 +39,8 @@
   import "./App.sass";
   import { WeekRecords } from "./WeekRecords";
 
+  const microgramsUnit = "μg";
+
   let chart;
 
   let weekRecords = new WeekRecords();
@@ -47,6 +51,8 @@
 
   let lastDose = 0;
   let daysSinceLastDose = 0;
+
+  let chartRowVisibility = "hidden";
 
   // Partially a workaround for "selected" not working.
   // See: https://github.com/bestguy/sveltestrap/issues/391
@@ -79,7 +85,7 @@
     endDay.setDate(startDay.getDate() + consecutiveDays);
 
     const randomChartLabelColor = `hsla(${Math.random() * 360}, 70%, 80%, 1)`;
-    
+
     weekRecords.addWeek({
       week: ++weekRecords.currentWeekIndex,
       startingDay: startDay,
@@ -94,6 +100,8 @@
     data.datasets = weekRecords.getRecords();
     data.labels = weekRecords.generateChartLabels();
     chart.update();
+
+    chartRowVisibility = "visible";
   };
 
   const clearChart = (event) => {
@@ -101,6 +109,7 @@
 
     weekRecords = new WeekRecords();
 
+    data.datasets = [];
     chart.data.labels = [];
     chart.data.datasets = [];
     chart.update();
@@ -110,28 +119,30 @@
 <main>
   <Container class="p-3">
     <h1 class="mb-3">Substance Calculator</h1>
-    <Form>
-      <Row>
+    <Form class="mb-3">
+      <Row class="gx-5">
         <Col xs="3">
           <InputGroup class="mb-3">
             <FormGroup floating label="Desired dose" class="no-margin">
               <Input bind:value={desiredDose} placeholder="Desired dose" />
             </FormGroup>
-            <InputGroupText>μg</InputGroupText>
+            <InputGroupText>{microgramsUnit}</InputGroupText>
           </InputGroup>
         </Col>
-      </Row>
-      <Row>
         <Col xs="3">
-          <InputGroup class="mb-3">
+          <InputGroup>
             <FormGroup floating label="Last dose (optional)" class="no-margin">
               <Input bind:value={lastDose} placeholder="Last dose" />
             </FormGroup>
-            <InputGroupText>μg</InputGroupText>
+            <InputGroupText>{microgramsUnit}</InputGroupText>
           </InputGroup>
         </Col>
       </Row>
-      <Row>
+      <Row class="gx-5">
+        <Col xs="3">
+          <Label>Starting date</Label>
+          <DateInput bind:value={startDay} format="yyyy-MM-dd" />
+        </Col>
         <Col xs="3">
           <FormGroup>
             <Label for="daysSinceLastDose">
@@ -149,12 +160,6 @@
               disabled={lastDose < 1}
             />
           </FormGroup>
-        </Col>
-      </Row>
-      <Label>Starting date</Label>
-      <Row class="mb-3">
-        <Col xs="3">
-          <DateInput bind:value={startDay} format="yyyy-MM-dd" />
         </Col>
       </Row>
       <Row>
@@ -196,8 +201,23 @@
       <Button color="primary" on:click={insertWeek}>Add week</Button>
       <Button color="danger" on:click={clearChart}>Reset chart</Button>
     </Form>
-    <Row>
-      <Line bind:chart {data} {options} />
+    <Row style="visibility: {chartRowVisibility}">
+      <Col xs="3">
+        <h3>Total Dosages</h3>
+        <ListGroup flush>
+          {#each data.datasets as week, weekIndex}
+            <ListGroupItem>
+              <strong>Week {weekIndex + 1}:</strong>
+              {week.data.reduce(
+                (previousValue, currentValue) => previousValue + currentValue
+              )} {microgramsUnit}
+            </ListGroupItem>
+          {/each}
+        </ListGroup>
+      </Col>
+      <Col>
+        <Line bind:chart {data} {options} />
+      </Col>
     </Row>
   </Container>
 </main>
