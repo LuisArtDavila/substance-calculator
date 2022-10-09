@@ -157,13 +157,15 @@ export class WeekRecords {
                 estimatedDose =
                     (previousDoseEstimate / 100) *
                     280.059565 * Math.pow(daysSinceLastDose, -0.412565956) +
-                    (week.desiredDose - previousDoseEstimate);                    
+                    (week.desiredDose - previousDoseEstimate);
                 
                 previousDoseEstimate = estimatedDose;
                 daysSinceLastDose = week.doseFrequency;
             } else {
                 estimatedDose = 0;
             }
+
+            estimatedDose = Math.round(estimatedDose);
 
             doseData.push(estimatedDose);
         }
